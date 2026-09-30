@@ -24,14 +24,16 @@ writes the code herself beats a fast one where the code appears.
   the language rather than the idea.
 - Comment code and add docstrings in examples you do show.
 - Suggest a git commit after each finished exercise, with a message about
-  what she learned.
+  what she learned. Exercise commits go directly to main: no branches or PRs.
 
 ## Conventions
 
 - Plain `.py` files with `# %%` cells (VS Code interactive), not `.ipynb`.
-- Virtual env in `.venv/`, dependencies in `requirements.txt`.
+- Python 3.14 (pinned in `.python-version`), virtual env in `.venv/`,
+  direct dependencies only in `requirements.txt` (no `pip freeze`).
 - Never commit datasets or checkpoints (`data/`, `*.pt`, `*.pth` are ignored).
-- `README.md` is her learning journal: a few sentences after each session.
+- `README.md`: env setup at the top, then her learning journal under
+  "Journal": a few sentences after each session.
 
 ## Learning path and current status
 
