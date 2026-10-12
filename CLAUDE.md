@@ -34,6 +34,9 @@ writes the code herself beats a fast one where the code appears.
 - Never commit datasets or checkpoints (`data/`, `*.pt`, `*.pth` are ignored).
 - `README.md`: env setup at the top, then her learning journal under
   "Journal": a few sentences after each session.
+- Tutor guides: one per lesson in `docs/lessons/`, Typst source sharing
+  `template.typ`. Rebuild with `typst compile docs/lessons/<file>.typ` and
+  commit the `.typ` and the `.pdf` together. Learner-neutral wording, no names.
 
 ## Learning path and current status
 

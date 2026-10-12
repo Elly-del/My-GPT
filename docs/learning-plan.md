@@ -15,9 +15,13 @@ episodes 1–4 (matrix multiplication as many dot products).
 
 ## Current status
 
-Session 1 not yet done. Update this line after each session.
+Lesson 1 done on 2026-10-11 (videos, `vectors.py`). Next: lesson 2
+(`derivative.py`, `value.py`). Update this line after each session.
 
 ## Session 1 (about 3 hours)
+
+Run as two lessons: blocks 1-2 are lesson 1, blocks 3-5 are lesson 2.
+Tutor guides (Typst source and PDF) are in `docs/lessons/`.
 
 Videos:
 - Ch. 1, But what is a neural network? https://www.youtube.com/watch?v=aircAruvnKk
