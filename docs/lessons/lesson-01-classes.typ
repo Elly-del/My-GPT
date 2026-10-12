@@ -206,3 +206,76 @@ git push
 Then the learner writes a few sentences under "Journal" in `README.md`, covering what surprised them and what still feels fuzzy, and commits that too.
 
 Keep the two written answers from block 1. Lesson 2 needs them.
+
+#pagebreak()
+
+= Appendix: a reference solution
+
+Show this only after the lesson, next to the learner's own file, and go through the differences together. It covers what the lesson asks for and nothing more.
+
+```python
+# %% The class
+import math
+
+
+class Vector2D:
+    """A vector in the plane, with coordinates x and y."""
+
+    def __init__(self, x, y):
+        """Called by Vector2D(3, 4): stores the coordinates on the new object."""
+        self.x = x
+        self.y = y
+
+    def norm(self):
+        """Length of the vector, by Pythagoras."""
+        return math.sqrt(self.x**2 + self.y**2)
+
+    def __repr__(self):
+        """What print shows. It looks like the code that rebuilds the vector."""
+        return f"Vector2D({self.x}, {self.y})"
+
+    def __add__(self, other):
+        """u + v builds a new vector and leaves u and v unchanged."""
+        return Vector2D(self.x + other.x, self.y + other.y)
+
+    def __mul__(self, k):
+        """u * k, where k is a number."""
+        return Vector2D(self.x * k, self.y * k)
+
+    def __rmul__(self, k):
+        """k * u. Python calls it after int.__mul__ returns NotImplemented."""
+        return self * k
+
+
+# %% Checks
+u = Vector2D(3, 4)
+v = Vector2D(1, 2)
+print(u)         # Vector2D(3, 4)
+print(u.norm())  # 5.0
+print(u + v)     # Vector2D(4, 6)
+print(u)         # Vector2D(3, 4), unchanged by the addition
+print(u * 2)     # Vector2D(6, 8)
+print(2 * u)     # Vector2D(6, 8)
+```
+
+== Points to compare
+
+#ask[Run `print([u, (3, 4)])`. Can you tell the vector from the tuple?]
+
+#expect[
+  A `__repr__` that returns `(3 , 4)` or `(3, 4)` prints like a tuple, so the list shows `[(3 , 4), (3, 4)]`. Python's convention is that `repr` looks like the code that rebuilds the object, which gives `[Vector2D(3, 4), (3, 4)]`. An f-string also builds the text more simply than `"(" + str(self.x) + ...`.
+]
+
+#ask[
+  `__rmul__` can copy the body of `__mul__` or call `self * k`. If `__mul__` gets a bug fix next week, which version still works?
+]
+
+#expect[
+  `self * k` hands the work back to `__mul__`, so one fix covers both `u * 2` and `2 * u`. A copied body has to be fixed twice, and forgetting one copy makes `u * 2` and `2 * u` disagree.
+]
+
+#ask[The checks run every time the file runs. How would you re-run only the `2 * u` check?]
+
+#expect[
+  Split the file into `# %%` cells, with the class in the top cell and the checks below, as in the reference. The project uses this format for every exercise.
+]
