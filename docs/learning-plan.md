@@ -48,3 +48,31 @@ Homework: add `__sub__`, `__pow__`, `tanh()` to `Value`, and make
 
 If block 2 takes the whole time, stop there. Classes must be solid before
 micrograd.
+
+## Session 2 (about 3 hours)
+
+Run as two lessons on Karpathy's micrograd video. Lesson 3 covers the
+video's 0:52 to 1:48 in code the learner writes herself; lesson 4 covers
+2:00 to the end. Tutor guide for lesson 3 in `docs/lessons/`.
+
+Lesson 3, `02_micrograd/engine.py` (starts from the lesson 2 `Value`):
+1. Warm-up (10 min): homework check, `3 + Value(2.0)` and `tanh()`.
+2. Gradients by hand (35 min): extend the lesson 2 graph with f = -2 and
+   L = d * f (L = -8). Nudge each input, then get the same numbers with
+   the chain rule along the graph (dL/da = 6, dL/db = -4, dL/dc = -2,
+   dL/df = 4). Add a `grad` attribute, fill it by hand from L down. Name
+   backpropagation only now. One uphill step: L goes to -7.286.
+3. `_backward` and `backward()` (40 min): functions as values, a
+   `_backward` closure stored on each result, why the order matters, a
+   `backward()` with a topological order. Check on a tanh neuron
+   (x1 = 2, x2 = 0, w1 = -3, w2 = 1, b = 6.8813735870195432): o = 0.7071,
+   n.grad = 0.5, w1.grad = 1.0, w2.grad = 0.
+4. The `a + a` bug (10 min): `=` gives a.grad = 1, `+=` gives 2.
+5. Wrap-up and commit (5 min).
+
+Homework: watch the video 0:52 to 1:48; `_backward` for `__pow__`;
+`exp()`, `__truediv__`, `__neg__`; rebuild the neuron with tanh spelled
+out from exp and check the gradients match.
+
+Lesson 4: `Neuron`, `Layer` and `MLP` classes, a loss on four examples,
+gradient descent by hand, then the first training loop.
