@@ -52,8 +52,8 @@ micrograd.
 ## Session 2 (about 3 hours)
 
 Run as two lessons on Karpathy's micrograd video. Lesson 3 covers the
-video's 0:52 to 1:48 in code the learner writes herself; lesson 4 covers
-2:00 to the end. Tutor guide for lesson 3 in `docs/lessons/`.
+video's 0:32 to 1:27 in code the learner writes herself; lesson 4 covers
+1:44 to the end. Tutor guide for lesson 3 in `docs/lessons/`.
 
 Lesson 3, `02_micrograd/engine.py` (starts from the lesson 2 `Value`):
 1. Warm-up (10 min): homework check, `3 + Value(2.0)` and `tanh()`.
@@ -70,7 +70,7 @@ Lesson 3, `02_micrograd/engine.py` (starts from the lesson 2 `Value`):
 4. The `a + a` bug (10 min): `=` gives a.grad = 1, `+=` gives 2.
 5. Wrap-up and commit (5 min).
 
-Homework: watch the video 0:52 to 1:48; `_backward` for `__pow__`;
+Homework: watch the video 0:32 to 1:39; `_backward` for `__pow__`;
 `exp()`, `__truediv__`, `__neg__`; rebuild the neuron with tanh spelled
 out from exp and check the gradients match.
 

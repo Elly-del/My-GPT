@@ -9,7 +9,7 @@
   meta: (
     ("Duration", [About 1 h 40 min, plus homework.]),
     ("File", [`02_micrograd/engine.py`, started by pasting in the `Value` class from lesson 2, homework included. The name is micrograd's own, and lesson 4 adds `nn.py` next to it.]),
-    ("Before", [Lesson 2 and its homework done, `tanh()` above all. Ideally the learner has watched the first 52 minutes of Karpathy's #link("https://www.youtube.com/watch?v=VMj-3S1tku0")[micrograd video], which replay lesson 2 with the same numbers. Not a blocker.]),
+    ("Before", [Lesson 2 and its homework done, `tanh()` above all. Ideally the learner has watched the first 32 minutes of Karpathy's #link("https://www.youtube.com/watch?v=VMj-3S1tku0")[micrograd video], which replay lesson 2 with the same numbers. Not a blocker. No further: from 0:32 the video does block 1 of this lesson.]),
     ("Goals", [The learner computes the gradient of every node of a small graph by hand with the chain rule, explains why the gradients must be filled from the output backwards, stores a function in an attribute, writes a `backward()` that works on any expression, and explains why `a + a` needs `+=`.]),
   ),
 )
@@ -47,10 +47,10 @@ The word "backpropagation" is allowed from the end of block 1, once the learner 
 
 #expect[`Value(data=0.7071067811865476)`. This exact number comes back in block 2, step 4.]
 
-If `tanh()` is missing, write it now. The rest of the homework can wait, except that step 4 of block 2 also uses `3 * Value(2.0)` style arithmetic.
+If `tanh()` is missing, write it now. The rest of the homework can wait, except `Value(2.0) + 3`: block 1 nudges a `Value` with `a + h`.
 
 #task[
-  Create `02_micrograd/engine.py` with the `Value` class in the top `# %%` cell, pasted from `value.py`. Checks go in cells below, as before.
+  Create `02_micrograd/engine.py` with the `Value` class in the top `# %%` cell, pasted from `value.py`. Checks go in cells below, as before. If the lesson 2 stretch was skipped, `Value` has no `label` yet: add the parameter `label=""` to `__init__` now, because the graph, the printer and the neuron below all use it.
 ]
 
 = Block 1: gradients by hand
@@ -204,8 +204,8 @@ Functions as values are new. Take five minutes on unrelated code before the task
 # %% Functions are objects, and a nested function remembers its surroundings
 import math
 
-f = math.sqrt      # no parentheses: the function itself, not a call
-print(f(16.0))     # 4.0
+root = math.sqrt   # no parentheses: the function itself, not a call
+print(root(16.0))  # 4.0
 
 
 def make_adder(k):
@@ -247,18 +247,19 @@ show(L)  # the same seven gradients as block 1
 ]
 
 #watch[
-  - `TypeError: 'NoneType' object is not callable`, either `out._backward = _backward()` with parentheses, so Python called the function and stored what it returned, or `self._backward = None` in `__init__`. The message says what was called: `None`.
-  - `AttributeError: 'Value' object has no attribute '_backward'` on a leaf. `__init__` does not set the default.
-  - Every gradient stays `0.0` except `L`'s. Either `L.grad = 1.0` was forgotten, or `out._backward = _backward` is missing and the leaf's do-nothing version ran. Ask: "Who sets `L.grad`? Nobody above it can."
+  - `TypeError: 'NoneType' object is not callable`. `out._backward = _backward()` with parentheses, so Python called the function and stored what it returned. The message says what was called: `None`.
+  - `AttributeError: 'Value' object has no attribute '_backward'`. `out._backward = _backward` is missing, and `__init__` sets no default either.
+  - Every gradient stays `0.0`, `L`'s included. `L.grad = 1.0` was forgotten. Ask: "Who sets `L.grad`? Nobody above it can."
+  - Every gradient stays `0.0` except `L`'s. `out._backward = _backward` is missing, and the do-nothing default from `__init__` ran instead.
   - `self.grad = out.grad` with `=` works for now. Leave it. Block 3 is about that.
 ]
 
 == Step 2: the order matters
 
-#ask[Call the three functions in the order the nodes were created, `e`, `d`, `L`. Predict `show(L)` first.]
+#ask[Rebuild the graph so every `grad` is back to `0.0`, set `L.grad = 1.0`, then call the three functions in the order the nodes were created, `e`, `d`, `L`. Predict `show(L)` first.]
 
 #expect[
-  `a`, `b` and `c` get `0.0`, while `d` gets `-2.0` and `f` gets `4.0`. `e._backward` ran while `e.grad` was still `0.0`, and pushed that zero down. A node's `_backward` may only run once its own `grad` is final, so after every node that depends on it.
+  `a`, `b`, `c` and `e` get `0.0`, while `d` gets `-2.0` and `f` gets `4.0`. `e._backward` ran while `e.grad` was still `0.0` and pushed that zero to `a` and `b`; `d._backward` did the same to `e` and `c`. A node's `_backward` may only run once its own `grad` is final, so after every node that depends on it. Without the rebuild, the gradients left over from step 1 make the wrong order print the right numbers.
 ]
 
 == Step 3: `backward()`
@@ -279,7 +280,8 @@ show(L)  # the same seven gradients as block 1
 
 #watch[
   - `TypeError: cannot use 'Value' as a set element (unhashable type: 'Value')`. A `__eq__` was added to `Value`, following the lesson 1 detour, and Python then refuses to put the object in a set. Remove `__eq__`. Two different nodes with the same `data` must stay different nodes.
-  - `L.backward()` twice in a row doubles every gradient, once `+=` is in. Ask whether that is a bug. It is the expected behavior, and lesson 4 resets the gradients before each pass.
+  - `TypeError: 'NoneType' object is not callable` or `AttributeError: 'Value' object has no attribute '_backward'`, on a leaf. `backward()` is the first code to call a leaf's `_backward`, and `__init__` sets it to `None` or not at all instead of the do-nothing default.
+  - `L.backward()` twice in a row, once `+=` is in, does not give the same numbers again. `L.grad` is reset to 1, but every other gradient keeps growing: `d` and `f` double, `e` and `c` triple, `a` and `b` quadruple. Ask whether that is a bug. `backward()` assumes every gradient starts at `0.0`, and lesson 4 resets them before each pass.
 ]
 
 == Step 4: a neuron
@@ -289,7 +291,7 @@ The derivative of `tanh` is needed first.
 #ask[On paper, with $tanh(x) = (e^(2x) - 1) \/ (e^(2x) + 1)$: what is $tanh'(x)$?]
 
 #expect[
-  The quotient rule gives $4e^(2x) \/ (e^(2x) + 1)^2$, and expanding $1 - tanh(x)^2$ gives the same fraction. So $tanh'(x) = 1 - tanh(x)^2$, which is handy: the derivative comes from the output, `1 - out.data**2`, with no `exp` to recompute. If the algebra drags, accept the formula and check it by nudging: at $x = 0.8814$, the nudge gives `0.49999964646385564` and $1 - 0.7071^2$ gives `0.4999999999999999`.
+  The quotient rule gives $4e^(2x) \/ (e^(2x) + 1)^2$, and expanding $1 - tanh(x)^2$ gives the same fraction. So $tanh'(x) = 1 - tanh(x)^2$, which is handy: the derivative comes from the output, `1 - out.data**2`, with no `exp` to recompute. If the algebra drags, accept the formula and check it by nudging `tanh` at `0.8813735870195432` with `h = 0.0001`: the nudge gives `0.4999646454939555`, and `1 - 0.7071067811865476**2` gives `0.4999999999999999`.
 ]
 
 #task[
@@ -374,13 +376,13 @@ Then a few sentences in the `README.md` journal, committed too.
 
 = Homework
 
-+ Watch the #link("https://www.youtube.com/watch?v=VMj-3S1tku0")[micrograd video] from 0:52 to 1:48. Everything there was done today, in the same order and with the same numbers. Listen for the English words: gradient, backward pass, chain rule, topological sort, leaf node.
++ Watch the #link("https://www.youtube.com/watch?v=VMj-3S1tku0")[micrograd video] from 0:32 to 1:39. Up to 1:27 it replays today's lesson with the same numbers; from 1:27 it does the homework items below. Listen for the English words: gradient, backward pass, chain rule, topological sort, leaf node.
 + `_backward` for `__pow__`, using $(x^k)' = k x^(k-1)$. `Value(3.0) ** 2` gives `9.0` and a gradient of `6.0` on the input.
-+ `exp()`, with `math.exp`. Its derivative is itself, so the rule reads from `out.data`. `Value(0.0).exp()` gives `1.0` with gradient `1.0`; `Value(1.0).exp()` gives `2.718281828459045` with the same gradient.
++ `exp()`, with `math.exp`. Its derivative is itself, so the rule reads from `out.data`. `Value(0.0).exp()` gives `1.0` with gradient `1.0`; `Value(1.0).exp()` gives `2.718281828459045`, and its gradient is that same number.
 + `__truediv__` as `self * other ** -1`, and `__neg__` as `self * -1`. No new rule is needed: `*` and `**` already know theirs. `Value(6.0) / Value(3.0)` gives `2.0`, with gradients `0.3333333333333333` on the 6 and `-0.6666666666666666` on the 3.
-+ The video's exercise at 1:48: rebuild the neuron with `tanh` spelled out as `(e - 1) / (e + 1)` where `e = (2 * n).exp()`. `o.backward()` must give the same nine gradients as block 2, step 4. The graph is longer, the gradients are the same.
++ The video's exercise at 1:27: rebuild the neuron with `tanh` spelled out as `(e - 1) / (e + 1)` where `e = (2 * n).exp()`. `o.backward()` must give the same nine gradients as block 2, step 4. The graph is longer, the gradients are the same.
 
-Next: lesson 4 turns `Value` into a neuron class, a layer and a small network, writes the number to make small, and trains on four examples. That is the video from 2:00.
+Next: lesson 4 turns `Value` into a neuron class, a layer and a small network, writes the number to make small, and trains on four examples. That is the video from 1:44.
 
 #pagebreak()
 
@@ -397,6 +399,7 @@ class Value:
     """A number that remembers how it was computed, and its gradient."""
 
     def __init__(self, data, _children=(), _op="", label=""):
+        """Called by Value(2.0): a leaf unless _children names its parents."""
         self.data = data
         self.grad = 0.0               # dL/dthis, filled by backward()
         self._backward = lambda: None  # a leaf has nothing to push down
@@ -405,9 +408,11 @@ class Value:
         self.label = label
 
     def __repr__(self):
+        """What print shows."""
         return f"Value(data={self.data})"
 
     def __add__(self, other):
+        """self + other, plus the rule that pushes out.grad back to both."""
         other = other if isinstance(other, Value) else Value(other)
         out = Value(self.data + other.data, (self, other), "+")
 
@@ -420,6 +425,7 @@ class Value:
         return out
 
     def __mul__(self, other):
+        """self * other, same pattern as +."""
         other = other if isinstance(other, Value) else Value(other)
         out = Value(self.data * other.data, (self, other), "*")
 
@@ -432,7 +438,8 @@ class Value:
         return out
 
     def tanh(self):
-        t = (math.exp(2 * self.data) - 1) / (math.exp(2 * self.data) + 1)
+        """tanh of self, from math.exp, with one parent."""
+        t =(math.exp(2 * self.data) - 1) / (math.exp(2 * self.data) + 1)
         out = Value(t, (self,), "tanh")
 
         def _backward():
@@ -448,6 +455,7 @@ class Value:
         seen = set()
 
         def visit(v):
+            """Append v to order after everything it was computed from."""
             if v not in seen:
                 seen.add(v)
                 for parent in v._prev:
@@ -477,5 +485,5 @@ class Value:
 #ask[`backward()` sets `self.grad = 1.0` after building the order, not before. Would it matter?]
 
 #expect[
-  Not here, since building the order touches no gradient. It would matter if `backward()` were called on a node that already has a gradient from an earlier call: `1.0` replaces it, while `+=` in the `_backward` functions accumulates. Lesson 4 adds a step that resets every gradient to zero before each `backward()`.
+  No. Building the order reads only `_prev` and touches no gradient, so the line can go before or after it. What matters on a second call is `=` against `+=`: `self.grad = 1.0` resets the top node, while every `_backward` keeps adding to what is already there. Lesson 4 adds a step that resets every gradient to zero before each `backward()`.
 ]
