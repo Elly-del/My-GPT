@@ -11,6 +11,7 @@
     ("Files", [`01_python_warmup/derivative.py` and `01_python_warmup/value.py`, both empty at the start.]),
     ("Before", [Lesson 1 done. `import matplotlib` works in the `.venv`, otherwise run `uv pip install -r requirements.txt`. Have the learner's written answers from lesson 1, block 1, at hand.]),
     ("Goals", [The learner estimates a derivative numerically, explains why `h` cannot go to zero on a computer, reads a partial derivative as "nudge one input, freeze the others", explains why the derivative of `a * b + c` with respect to `a` is `b`, and builds a class whose `+` and `*` remember their inputs.]),
+    ("Run", [On 2026-11-01. A session review, a catch-up plan before lesson 3 and a reference solution follow the homework.]),
   ),
 )
 
@@ -290,3 +291,253 @@ All in `value.py`, in this order. Each task makes the next one easier.
 + `tanh()`, using $tanh(x) = (e^(2x) - 1) \/ (e^(2x) + 1)$ and `math.exp`. `Value(0.0).tanh()` gives `0.0`, and `Value(0.8813735870195432).tanh()` gives `0.7071067811865476`. Before comparing a few values with `math.tanh`, the learner predicts `tanh` at 3 and at -3. The answers are about 0.995 and -0.995.
 
 Next: lesson 3 starts Karpathy's #link("https://www.youtube.com/watch?v=VMj-3S1tku0")[micrograd video]. Its first half hour repeats this lesson almost step by step.
+
+#pagebreak()
+
+= Session review, 2026-11-01
+
+Based on the two commits of that day, `derivative.py` and `value.py`. What was said aloud leaves no trace in the files, so "not in the file" means "check whether it happened", not "missed".
+
+#table(
+  columns: (auto, 1fr, auto),
+  table.header[*Goal*][*In the files*][*Status*],
+  [Numerical derivative], [`pente(x, h)`. `pente(-3.0, 0.000001)` prints `-21.999997002808414`, against $f'(-3) = -22$.], [Done],
+  [Why `h` cannot go to zero], [No loop over `h`, no `3 + 1e-16 == 3`.], [Not in the file],
+  [Tangent and plot], [`tangente` with `20` and `14` typed in. The plot is right.], [Done],
+  [Partial derivatives], [`g(a, b, c)` and `pente_a`, which prints `-3.000000000064062`. Nothing for `b` or `c`.], [Half],
+  [Why $partial d \/ partial a = b$], [Aloud only, if at all.], [Ask again],
+  [A `Value` that remembers its inputs], [The class exists, but its parents are plain numbers, not `Value` objects.], [Blocker],
+  [Stretch: graph printer], [Absent. It cannot work until the parents are objects.], [Skip],
+  [Homework], [Absent. `Value(2.0) + 3` raises an error.], [Partly needed],
+)
+
+== What is solid
+
+- `f`, `pente`, `tangente` and the plot are short and correct. The code of block 1 needs no rework; only step 4 is missing.
+- Default parameters were tried on a toy first, `mult(x, y=2)`, then used in `Value.__init__`. That is the right reflex for any new Python feature. Say so, so it sticks.
+- The idea of a partial derivative, "move one input, freeze the others", is in the code: `pente_a` nudges `a` and passes `b` and `c` unchanged.
+
+== What the code shows
+
+These are in order of importance. Only the first one blocks lesson 3.
+
+*1. The parents are numbers.* In `__add__` and `__mul__`, `prt1 = self.vlr` keeps `-6.0`, not the `Value` that holds it. It is exactly the first case of the step 3 "Watch for" box. From `d`, the trail stops after one step:
+
+```text
+>>> d.prt1
+-6.0
+>>> d.prt1.prt1
+AttributeError: 'float' object has no attribute 'prt1'
+```
+
+Lesson 3 walks this trail from the output down to every input, so there is nothing to walk yet.
+
+#ask[Starting from `d`, reach `a` in code. Read the error aloud.]
+
+#hints[
+  + "What type is `d.prt1`? Print `type(d.prt1)`."
+  + "In `__add__`, which of `self` and `self.vlr` still knows its own parents?"
+]
+
+#expect[
+  Storing `self` and `other` instead of their numbers. Then `d.prt1.prt1 is a` prints `True`: the `Value` objects are linked, and the graph exists.
+]
+
+*2. `__repr__` glues everything together.* `print(d)` shows `4.0-6.0+10.0` and `print(a)` shows `2NoneNoneNone`. The first one reads as a sum worth 8, while `d` is 4.
+
+#ask[Read `4.0-6.0+10.0` aloud to someone who has not seen the code. What number do they hear?]
+
+#expect[
+  A `repr` shows the object's own value: `Value(data=4.0)`. The parents are for the printer of step 4, or for `d._prev`. Fix finding 1 first and this one gets worse: `str(self.prt1)` then calls `__repr__` on the parent, and `print(d)` shows `4.0-6.02NoneNoneNone*-3.0NoneNoneNone+10.0NoneNoneNone`. A good moment to ask what `repr` is for.
+]
+
+*3. The comments do not match the output.* The check cell keeps the guide's comments, such as `# Value(data=4.0)`, while the file prints `4.0-6.0+10.0`. A comment next to a `print` is a prediction, and the run should confirm it. Here the mismatch was the first visible sign of findings 1 and 2. Make "run, then compare with the comment" a habit before lesson 3, where every check cell works this way.
+
+*4. The names.* `vlr`, `prt1`, `prt2` and `op` instead of `data`, `_prev` and `_op`. Lesson 3's checks, its printer and the micrograd video all use micrograd's names. One collection of parents also beats two fixed slots: `tanh` has a single parent, and `backward()` in lesson 3 loops over the parents of each node. Renaming is mechanical, so give the names directly.
+
+*5. Plain numbers.* `Value(2.0) + 3` raises `AttributeError: 'int' object has no attribute 'vlr'`. That is homework item 1, and lesson 3 needs it in block 1, where `a + h` nudges a `Value` by a float.
+
+*Minor.*
+- `tangente` has `20` and `14` typed in. Fine for the step. To link it back to the formula, ask: "Which numbers change for the tangent at $x = 1$? Can `f` and `pente` give them?"
+- `value.py` has no `# %%` cells, and `derivative.py` has one, before the plot. Without cells, every run replays the whole file, the plot window included.
+- The `README.md` journal is still empty for lessons 1 and 2.
+
+== Catch-up before lesson 3 (about 50 min)
+
+A short session of its own, or lesson 3 runs over two sittings. In this order; each step ends on a check the learner runs.
+
++ *The trail* (10 min). Finding 1. Check: `d.prt1.prt1 is a` prints `True`.
++ *The names* (5 min). `data`, `_prev` for all parents together (a tuple or a set, empty for an input), `_op`, and `label=""`. `__repr__` returns `Value(data=4.0)`. Check: the step 3 check cell, unchanged, prints what its comments say.
++ *Homework items 1, 2 and 5* (20 min). Wrapping plain numbers, `3 + Value(2.0)`, `tanh()`. Lesson 3 needs the first in block 1 and `tanh` in block 2. Items 3 and 4 can wait for the lesson 3 homework, which builds on `__pow__`.
++ *Shrinking `h`* (10 min). Block 1, step 4, unless it was covered aloud. It is the only exercise on the limits of floats in the whole path.
++ *Partial derivatives, aloud* (5 min). $partial d \/ partial b$ and $partial d \/ partial c$ with `pente_a` copied, then "why is $partial d \/ partial a$ equal to $b$?" from block 2, step 1.
+
+#ask[At $x = -3$ with `h = 1e-6`, `pente` was off by about `0.000003`. At $x = 3$ the error was $3h$ too. Why the same error at both points?]
+
+#expect[
+  $f(x + h) - f(x) = (6x - 4)h + 3h^2$, so the ratio is $f'(x) + 3h$ at every $x$. The error comes only from the $3x^2$ term, whose curvature is the same everywhere. A good check that step 2 of block 1 was understood, not memorized.
+]
+
+#pagebreak()
+
+= Appendix: a reference solution
+
+Show this only after the catch-up, next to the learner's files, and go through the differences together. It covers the lesson, the stretch and the homework. Names follow this guide: `slope` and `tangent` are the learner's `pente` and `tangente`. Every printed value in the comments was checked on Python 3.14.
+
+== `derivative.py`
+
+```python
+# %% f, and its derivative by hand: f'(x) = 6x - 4, so f'(3) = 14
+def f(x):
+    """The parabola of the lesson."""
+    return 3 * x**2 - 4 * x + 5
+
+
+print(f(3))  # 20
+
+
+# %% The slope, measured by nudging x
+def slope(x, h):
+    """Rise over run between x and x + h."""
+    return (f(x + h) - f(x)) / h
+
+
+print(slope(3, 0.001))  # 14.00300000000243, the exact ratio is 14 + 3h
+print(slope(3, 0.01))  # 14.029999999999632
+print(slope(3, 0.1))  # 14.300000000000068
+print(slope(-3, 0.001))  # -21.996999999998934, exact -22
+print(slope(2 / 3, 0.001))  # 0.0029999999995311555, bottom of the parabola
+```
+
+```python
+# %% Shrinking h until it breaks: best near 1e-8, 0.0 at 1e-16
+for h in [0.1, 0.01, 0.001, 1e-6, 1e-8, 1e-10, 1e-12, 1e-14, 1e-15, 1e-16]:
+    print(h, slope(3, h))
+
+print(3 + 1e-16 == 3)  # True: 3 + 1e-16 rounds back to 3
+
+
+# %% Tangent at x = 3: y = f(3) + f'(3)(x - 3)
+def tangent(x):
+    """The line that touches f at x = 3."""
+    return f(3) + 14 * (x - 3)
+
+
+print(f(4) - tangent(4))  # 3, the 3h^2 term with h = 1
+```
+
+Then the plotting cell from block 1, step 5, unchanged.
+
+== `value.py`
+
+```python
+# %% Three inputs, plain floats: nudge one, freeze the others
+a, b, c = 2.0, -3.0, 10.0
+d = a * b + c
+print(d)  # 4.0
+
+h = 0.0001
+print(((a + h) * b + c - d) / h)  # -3.000000000010772, dd/da = b
+print((a * (b + h) + c - d) / h)  # 2.0000000000042206, dd/db = a
+print((a * b + (c + h) - d) / h)  # 0.9999999999976694, dd/dc = 1
+```
+
+```python
+# %% The class
+import math
+
+
+class Value:
+    """A number that remembers how it was computed."""
+
+    def __init__(self, data, _children=(), _op="", label=""):
+        """Value(2.0) is an input: no parents, no operation."""
+        self.data = data
+        self._prev = set(_children)  # the Value objects, not their numbers
+        self._op = _op
+        self.label = label
+
+    def __repr__(self):
+        """What print shows: the value only, not the parents."""
+        return f"Value(data={self.data})"
+
+    def __add__(self, other):
+        """self + other, keeping both parents."""
+        other = other if isinstance(other, Value) else Value(other)
+        return Value(self.data + other.data, (self, other), "+")
+
+    def __radd__(self, other):
+        """3 + Value: int.__add__ gives up, so Python calls this."""
+        return self + other
+
+    def __mul__(self, other):
+        """self * other, keeping both parents."""
+        other = other if isinstance(other, Value) else Value(other)
+        return Value(self.data * other.data, (self, other), "*")
+
+    def __rmul__(self, other):
+        """3 * Value, the 2 * u puzzle from lesson 1."""
+        return self * other
+
+    def __sub__(self, other):
+        """self - other, built from + and *."""
+        return self + other * -1
+
+    def __pow__(self, k):
+        """self ** k, with k a plain number, so not a parent."""
+        return Value(self.data**k, (self,), f"**{k}")
+
+    def tanh(self):
+        """tanh(x) = (e^2x - 1) / (e^2x + 1), with one parent."""
+        e = math.exp(2 * self.data)
+        return Value((e - 1) / (e + 1), (self,), "tanh")
+```
+
+```python
+# %% Checks
+a = Value(2.0, label="a")
+b = Value(-3.0, label="b")
+c = Value(10.0, label="c")
+e = a * b
+e.label = "e"
+d = e + c
+d.label = "d"
+print(d)  # Value(data=4.0)
+print(d._op)  # +
+print(d._prev)  # {Value(data=10.0), Value(data=-6.0)}, in any order
+print(a._prev)  # set()
+
+
+# %% Stretch: print the graph
+def show(v, depth=0):
+    """Print v, then what it was computed from, indented."""
+    op = f" ({v._op})" if v._op else ""
+    print("  " * depth + f"{v.label} = {v.data}{op}")
+    for parent in v._prev:
+        show(parent, depth + 1)
+
+
+show(d)  # the five lines of step 4, siblings in any order
+
+# %% Homework checks
+print(Value(2.0) + 3, Value(2.0) * 3)  # Value(data=5.0) Value(data=6.0)
+print(3 + Value(2.0), 3 * Value(2.0))  # Value(data=5.0) Value(data=6.0)
+print(Value(5.0) - Value(3.0))  # Value(data=2.0)
+print(Value(3.0) ** 2)  # Value(data=9.0)
+print(Value(0.8813735870195432).tanh())  # Value(data=0.7071067811865476)
+print(Value(3.0).tanh(), math.tanh(3.0))  # 0.9950547536867305 for both
+```
+
+== Points to compare
+
+#ask[`_prev` is built with `set(_children)`. A tuple works too. What would change?]
+
+#expect[
+  Nothing for this lesson. A set forgets the order and keeps one copy of a parent used twice, as in `a + a`. Lesson 3 copes with both; micrograd uses a set.
+]
+
+#ask[`__sub__` is one line and has no `Value(...)` in it. How does `Value(5.0) - 3` still build a graph?]
+
+#expect[
+  `3 * -1` is a plain `-3`, and `self + -3` goes through `__add__`, which wraps it. With `Value(3.0)` instead, `other * -1` goes through `__mul__`. Both paths reuse operations that already record their parents, which is why the homework order matters.
+]
