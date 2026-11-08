@@ -1,3 +1,6 @@
+import math
+
+
 def g(a, b, c):
     d = a * b + c
     return d
@@ -19,32 +22,60 @@ print(mult(5, 3), mult(5))
 
 
 class Value:
-    def __init__(self, vlr, prt1=None, prt2=None, op=None):
+    def __init__(self, vlr, prt=[], op="", label=""):
         self.vlr = vlr
-        self.prt1 = prt1
-        self.prt2 = prt2
+        self.prt = prt
         self.op = op
+        self.label = label
 
     def __repr__(self):
-        return str(self.vlr) + str(self.prt1) + str(self.op) + str(self.prt2)
+        # return "Value(data=" + str(self.vlr) + ")"
+        return (
+            f"Value(data={self.vlr}, prt={self.prt}, op={self.op}, label={self.label})"
+        )
 
     def __add__(self, other):
+        if not isinstance(other, Value):
+            other = Value(other)
         vlr = self.vlr + other.vlr
-        prt1 = self.vlr
-        prt2 = other.vlr
+        prt = [self, other]
         op = "+"
-        return Value(vlr, prt1, prt2, op)
+        return Value(vlr, prt, op)
+
+    def __radd__(self, other):
+        return self.__add__(other)
 
     def __mul__(self, other):
-        return Value(self.vlr * other.vlr, self.vlr, other.vlr, "*")
+        if not isinstance(other, Value):
+            other = Value(other)
+        return Value(self.vlr * other.vlr, [self, other], "*")
+
+    def __rmul__(self, other):
+        return self * other
+
+    def __sub__(self, other):
+        return self + other * (-1)
+
+    def __pow__(self, k):
+        return Value(self.vlr**k, [self], f"**{k}")
+
+    def tanh(self):
+        e = math.exp(2 * self.vlr)
+        return Value((e - 1) / (e + 1), [self], "tanh")
 
 
-a = Value(2)
-b = Value(-3.0)
-c = Value(10.0)
+def show(v, depth=0):
+    print(f"{'  ' * depth}{v.label}={v.vlr} {v.op}")
+    for prt in v.prt:
+        show(prt, depth + 1)
+
+
+# %% Checks
+a = Value(2.0, label="a")
+b = Value(-3.0, label="b")
+c = Value(10.0, label="c")
 e = a * b
+e.label = "e"
 d = e + c
-print(d)  # Value(data=4.0)
-print(d.op)  # +
-print(d.prt1)  # the two parents, Value(data=-6.0) and Value(data=10.0)
-print(a.prt2)
+d.label = "d"
+print(show(d))
