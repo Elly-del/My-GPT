@@ -15,8 +15,10 @@ episodes 1–4 (matrix multiplication as many dot products).
 
 ## Current status
 
-Lesson 1 done on 2026-10-11 (videos, `vectors.py`). Next: lesson 2
-(`derivative.py`, `value.py`). Update this line after each session.
+Lesson 2 run on 2026-11-01 (`derivative.py`, `value.py`), with gaps:
+`Value` stores numbers as parents, no `h` loop, no homework. Next: the
+catch-up from the lesson 2 session review, then lesson 3. Update this
+line after each session.
 
 ## Session 1 (about 3 hours)
 

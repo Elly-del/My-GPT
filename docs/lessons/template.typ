@@ -5,6 +5,7 @@
 #let amber = rgb("#9a6200")
 #let red = rgb("#b03a2e")
 #let grey = rgb("#5f6670")
+#let purple = rgb("#6a3d9a")
 
 #let callout(label, accent, body) = block(
   width: 100%,
@@ -26,6 +27,7 @@
 #let hints(body) = callout("If stuck, in this order", amber, body)
 #let watch(body) = callout("Watch for", red, body)
 #let task(body) = callout("Task", grey, body)
+#let target(body) = callout("Target code (for you)", purple, body)
 
 #let guide(number: 1, title: "", subtitle: "", meta: (), body) = {
   set document(title: "Lesson " + str(number) + ": " + title)
